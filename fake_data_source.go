@@ -5,6 +5,10 @@ import "fmt"
 type FakeDataSource struct {
 }
 
+func NewFakeDataSource() DataSource {
+	return FakeDataSource{}
+}
+
 func (s FakeDataSource) Get(key string) {
 	fmt.Println("getting data")
 }

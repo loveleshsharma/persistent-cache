@@ -34,17 +34,19 @@ type Cache struct {
 }
 
 func NewCache(config Config) (*Cache, error) {
-	if config.maxEntries == 0 {
+	if !config.isValid() {
 		return nil, errors.New("invalid config")
 	}
 
-	return &Cache{
+	cache := &Cache{
 		store:          make(map[string]Value, config.maxEntries),
-		dataSource:     FakeDataSource{},
+		dataSource:     config.dataSource,
 		entries:        0,
 		maxEntries:     config.maxEntries,
 		evictionPolicy: config.evictionPolicy,
-	}, nil
+	}
+
+	return cache, nil
 }
 
 func (c *Cache) Get(key string) (interface{}, error) {
@@ -121,4 +123,9 @@ func (v Value) isExpired() bool {
 type Config struct {
 	maxEntries     int64
 	evictionPolicy EvictionPolicy
+	dataSource     DataSource
+}
+
+func (c Config) isValid() bool {
+	return c.maxEntries != 0 && c.evictionPolicy != nil && c.dataSource != nil
 }
