@@ -29,6 +29,7 @@ func TestSetShouldSetTheKeyWithMaxDuration(t *testing.T) {
 		t.Errorf("default expiry should be maxDuration")
 	}
 
+	time.Sleep(time.Millisecond * 200)
 	mockDataSource.AssertExpectations(t)
 }
 
@@ -50,6 +51,7 @@ func TestSetShouldUpdateEntriesCountTo2(t *testing.T) {
 		t.Errorf("entries should be updated to 2")
 	}
 
+	time.Sleep(time.Millisecond * 200)
 	mockDataSource.AssertExpectations(t)
 }
 
@@ -78,6 +80,7 @@ func TestSetShouldEvictTheLeastRecentlyUsedItemFromCache(t *testing.T) {
 		t.Errorf("key 'two' should be evicted as its the lease recently used")
 	}
 
+	time.Sleep(time.Millisecond * 200)
 	mockDataSource.AssertExpectations(t)
 }
 
@@ -101,6 +104,7 @@ func TestCacheShouldDeleteKeyAfterExpiry(t *testing.T) {
 		t.Errorf("key should not be found when expired")
 	}
 
+	time.Sleep(time.Millisecond * 200)
 	mockDataSource.AssertExpectations(t)
 }
 
@@ -127,5 +131,6 @@ func TestGetShouldReturnTheKeySet(t *testing.T) {
 		t.Errorf("Get should return value as '1'")
 	}
 
+	time.Sleep(time.Millisecond * 200)
 	mockDataSource.AssertExpectations(t)
 }

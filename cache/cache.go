@@ -2,6 +2,7 @@ package cache
 
 import (
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 )
@@ -22,9 +23,11 @@ const defaultExpiryDuration = time.Hour * 24
 var ErrKeyNotFoundError = errors.New("key not found")
 
 type Cache struct {
-	mx         sync.Mutex
-	store      map[string]Value
-	dataSource DataSource
+	mx    sync.Mutex
+	store map[string]Value
+
+	persistenceQueue chan Record
+	dataSource       DataSource
 
 	entries    int64
 	maxEntries int64
@@ -38,13 +41,15 @@ func NewCache(config Config) (*Cache, error) {
 	}
 
 	cache := &Cache{
-		store:          make(map[string]Value),
-		dataSource:     config.DataSource,
-		entries:        0,
-		maxEntries:     config.MaxEntries,
-		evictionPolicy: config.EvictionPolicy,
+		store:            make(map[string]Value),
+		persistenceQueue: make(chan Record, config.MaxEntries),
+		dataSource:       config.DataSource,
+		entries:          0,
+		maxEntries:       config.MaxEntries,
+		evictionPolicy:   config.EvictionPolicy,
 	}
 
+	go cache.StartPersistenceQueue()
 	return cache, nil
 }
 
@@ -79,7 +84,10 @@ func (c *Cache) SetWithExpiry(key string, value interface{}, expiry time.Duratio
 	}
 
 	c.storeInCache(key, newValue)
-	c.dataSource.Set(key, value)
+	c.persistenceQueue <- Record{
+		key:   key,
+		value: value,
+	}
 }
 
 func (c *Cache) storeInCache(key string, value Value) {
@@ -93,6 +101,13 @@ func (c *Cache) updateInCache(key string, value Value) {
 
 func (c *Cache) isCacheFull() bool {
 	return c.entries == c.maxEntries
+}
+
+func (c *Cache) StartPersistenceQueue() {
+	for record := range c.persistenceQueue {
+		fmt.Println("record received")
+		c.dataSource.Set(record.key, record.value)
+	}
 }
 
 type Value struct {
@@ -131,4 +146,9 @@ type Config struct {
 
 func (c Config) isValid() bool {
 	return c.MaxEntries != 0 && c.EvictionPolicy != nil && c.DataSource != nil
+}
+
+type Record struct {
+	key   string
+	value interface{}
 }
