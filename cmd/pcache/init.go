@@ -1,10 +1,14 @@
 package main
 
 import (
+	persistantcache "github.com/loveleshsharma/persistent-cache"
 	"github.com/loveleshsharma/persistent-cache/cache"
 )
 
-var persistentCache *cache.Cache
+var (
+	persistentCache *cache.Cache
+	apiHandler      persistantcache.APIHandler
+)
 
 func initObjects() error {
 	var err error
@@ -14,5 +18,11 @@ func initObjects() error {
 		DataSource:     cache.NewFakeDataSource(),
 	})
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	apiHandler = persistantcache.NewApiHandler(persistentCache)
+
+	return nil
 }
