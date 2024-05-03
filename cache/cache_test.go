@@ -84,6 +84,43 @@ func TestSetShouldEvictTheLeastRecentlyUsedItemFromCache(t *testing.T) {
 	mockDataSource.AssertExpectations(t)
 }
 
+func TestSetShouldDoNothingIfValueIsSameForAnExistingKey(t *testing.T) {
+	var mockDataSource = mocks.NewDataSource(t)
+
+	testCache, _ := NewCache(Config{
+		MaxEntries:     2,
+		EvictionPolicy: NewLRUPolicy(),
+		DataSource:     mockDataSource,
+	})
+
+	mockDataSource.On("Set", "one", "1").Return().Once()
+
+	testCache.Set("one", "1")
+	testCache.Set("one", "1")
+
+	time.Sleep(time.Millisecond * 200)
+	mockDataSource.AssertExpectations(t)
+}
+
+func TestSetShouldModifyTheValueIfDifferentValueIsProvidedForExistingKey(t *testing.T) {
+	var mockDataSource = mocks.NewDataSource(t)
+
+	testCache, _ := NewCache(Config{
+		MaxEntries:     2,
+		EvictionPolicy: NewLRUPolicy(),
+		DataSource:     mockDataSource,
+	})
+
+	mockDataSource.On("Set", "one", "1").Return().Once()
+	mockDataSource.On("Set", "one", "2").Return().Once()
+
+	testCache.Set("one", "1")
+	testCache.Set("one", "2")
+
+	time.Sleep(time.Millisecond * 200)
+	mockDataSource.AssertExpectations(t)
+}
+
 func TestCacheShouldDeleteKeyAfterExpiry(t *testing.T) {
 	var mockDataSource = mocks.NewDataSource(t)
 	testCache, _ := NewCache(Config{

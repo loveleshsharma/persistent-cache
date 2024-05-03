@@ -83,6 +83,13 @@ func (c *Cache) SetWithExpiry(key string, value interface{}, expiry time.Duratio
 	c.mx.Lock()
 	defer c.mx.Unlock()
 
+	// if same value is set for the existing key, then do nothing
+	if existingVal, ok := c.store[key]; ok {
+		if existingVal.data == value {
+			return
+		}
+	}
+
 	newValue := NewValue(value, expiry)
 
 	if _, ok := c.store[key]; !ok && c.isCacheFull() {
