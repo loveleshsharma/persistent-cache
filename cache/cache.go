@@ -49,7 +49,14 @@ func NewCache(config Config) (*Cache, error) {
 		evictionPolicy:   config.EvictionPolicy,
 	}
 
-	go cache.StartPersistenceQueue()
+	startDataStoreListener := func() {
+		for record := range cache.persistenceQueue {
+			fmt.Println("record received")
+			cache.dataSource.Set(record.key, record.value)
+		}
+	}
+
+	go startDataStoreListener()
 	return cache, nil
 }
 
@@ -101,13 +108,6 @@ func (c *Cache) updateInCache(key string, value Value) {
 
 func (c *Cache) isCacheFull() bool {
 	return c.entries == c.maxEntries
-}
-
-func (c *Cache) StartPersistenceQueue() {
-	for record := range c.persistenceQueue {
-		fmt.Println("record received")
-		c.dataSource.Set(record.key, record.value)
-	}
 }
 
 type Value struct {
